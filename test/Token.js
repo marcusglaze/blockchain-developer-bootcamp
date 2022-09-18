@@ -7,7 +7,7 @@ const tokens = function (n) {
 
 describe('Token', function () {
 
-    let token, accounts, deployer;
+    let token, accounts, deployer, receiver;
 
     this.beforeEach(async function () {
         const Token = await ethers.getContractFactory('Token');
@@ -18,6 +18,7 @@ describe('Token', function () {
         );
         accounts = await ethers.getSigners();
         deployer = accounts[0];
+        receiver = accounts[1];
     });
 
     describe('Deployment', function () {
@@ -44,6 +45,44 @@ describe('Token', function () {
 
         it('assigns total supply to deployer', async function () {
             expect(await token.balanceOf(deployer.address)).to.equal(totalSupply);
+        })
+    })
+
+    describe('Sending Tokens', function () {
+        let amount, transaction, result;
+
+        describe('Success Tests', function () {
+
+            this.beforeEach(async function () {
+                amount = tokens(100);
+                transaction = await token.connect(deployer).transfer(receiver.address, amount);
+                result = await transaction.wait();
+            })
+    
+            it('tokens transfer successfully', async function () {
+                expect(await token.balanceOf(deployer.address)).to.equal(tokens(999900));
+                expect(await token.balanceOf(receiver.address)).to.equal(amount);
+            })
+    
+            it('emits a transfer event', async function () {
+                expect(result.events[0].event).to.equal('Transfer');
+                expect(result.events[0].args._from).to.equal(deployer.address);
+                expect(result.events[0].args._to).to.equal(receiver.address);
+                expect(result.events[0].args._value).to.equal(amount);
+            })
+        })
+
+        describe('Failure Tests', function () {
+
+            it('throws error if insufficient balance', async function() {
+                const invalidAmount = tokens(100000000);
+                await expect(token.connect(deployer).transfer(receiver.address, invalidAmount)).to.be.reverted;
+            })
+
+            it('throws error if invalid recipient', async function () {
+                const amount = tokens(100);
+                await expect(token.connect(deployer).transfer('0x0000000000000000000000000000000000000000', amount)).to.be.reverted;
+            })
         })
     })
 });

@@ -20,14 +20,16 @@ contract Token {
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
-        uint256 fromBalance = balanceOf[msg.sender];
-        uint256 toBalance = balanceOf[_to];
-
         // check to make sure owner has enough for transfer
-        assert(fromBalance >= _value);
+        require(balanceOf[msg.sender] >= _value);
 
-        balanceOf[msg.sender] = fromBalance - _value;
-        balanceOf[_to] = toBalance + _value;
+        // check to make sure _to address is valid
+        require(_to != address(0));
+
+        balanceOf[msg.sender] = balanceOf[msg.sender] - _value;
+        balanceOf[_to] = balanceOf[_to] + _value;
+
+        emit Transfer(msg.sender, _to, _value);
 
         return true;
     }
