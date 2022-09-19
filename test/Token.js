@@ -108,22 +108,6 @@ describe('Token', function () {
                 expect(result.events[0].args._spender).to.equal(exchange.address);
                 expect(result.events[0].args._value).to.equal(amount);
             })
-
-            it('transfers tokens from approved address', async function () {
-                await token.connect(exchange).transferFrom(deployer.address, receiver.address, amount);
-                expect(await token.balanceOf(deployer.address)).to.equal(tokens(999900));
-                expect(await token.balanceOf(receiver.address)).to.equal(amount);
-            })
-
-            it('emits a transfer event', async function () {
-                transaction = await token.connect(exchange).transferFrom(deployer.address, receiver.address, amount);
-                result = await transaction.wait();
-
-                expect(result.events[0].event).to.equal('Transfer');
-                expect(result.events[0].args._from).to.equal(deployer.address);
-                expect(result.events[0].args._to).to.equal(receiver.address);
-                expect(result.events[0].args._value).to.equal(amount);
-            })
         })
 
         describe('Failure Tests', function () {
@@ -131,17 +115,52 @@ describe('Token', function () {
             it('rejects invalid spender account', async function () {
                 await expect(token.connect(deployer).approve('0x0000000000000000000000000000000000000000', amount)).to.be.reverted;
             })
+        })
+    })
+
+    describe('Delegated Token Transfers', function () {
+
+        let amount, transaction, result;
+
+        this.beforeEach(async function () {
+            amount = tokens(100);
+            await token.connect(deployer).approve(exchange.address, amount);
+            //transaction = await token.connect(exchange).transferFrom(deployer.address, receiver.address, amount);
+            //result = transaction.wait();
+        })
+
+        describe('Success Tests', function () {
+
+            this.beforeEach(async function () {
+                transaction = await token.connect(exchange).transferFrom(deployer.address, receiver.address, amount);
+                result = await transaction.wait();
+            })
+
+            it('transfers tokens from approved address', async function () {
+                expect(await token.balanceOf(deployer.address)).to.equal(tokens(999900));
+                expect(await token.balanceOf(receiver.address)).to.equal(amount);
+            })
+
+            it('emits a transfer event', async function () {
+                expect(result.events[0].event).to.equal('Transfer');
+                expect(result.events[0].args._from).to.equal(deployer.address);
+                expect(result.events[0].args._to).to.equal(receiver.address);
+                expect(result.events[0].args._value).to.equal(amount);
+            })
+
+            it('updates allowance', async function () {
+                expect(await token.allowance(deployer.address, exchange.address)).to.equal(tokens(0));
+            })
+        })
+
+        describe('Failure Tests', function () {
 
             it('rejects transfer from non-approved address', async function () {
                 await expect(token.connect(receiver).transferFrom(deployer.address, receiver.address, amount)).to.be.reverted;
             })
 
-            it('rejects transferring more than allowed', async function () {
-                await expect(token.connect(exchange).transferFrom(deployer.address, receiver.address, tokens(1000))).to.be.reverted;
-            })
-
-            it('rejects insufficient balance', async function () {
-                await expect(token.connect(exchange).transferFrom(deployer.address, receiver.address, tokens(100000000))).to.be.reverted;
+            it('rejects transfer with insufficient funds', async function () {
+                await expect(token.connect(exchange).transferFrom(deployer.address, receiver.address, tokens(1000000000))).to.be.reverted;
             })
         })
     })
