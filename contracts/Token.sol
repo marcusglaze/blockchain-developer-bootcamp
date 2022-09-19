@@ -8,6 +8,7 @@ contract Token {
     uint256 public totalSupply;
 
     mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -34,16 +35,28 @@ contract Token {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) { 
+        // check to make sure function caller is approved to transfer
+        require(allowance[_from][msg.sender] >= _value);
 
+        // check to make sure _from account has sufficient funds
+        require(balanceOf[_from] >= _value);
+
+        // check to make sure _to address is valid
+        require(_to != address(0));
+
+        balanceOf[_from] = balanceOf[_from] - _value;
+        balanceOf[_to] = balanceOf[_to] + _value;
+
+        emit Transfer(_from, _to, _value);
+
+        return true;
     }
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
-
+        require(_spender != address(0));
+        allowance[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
     }
-
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-
-    }
-
 }
