@@ -1,5 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const { result } = require('lodash');
 
 const tokens = function (n) {
     return ethers.utils.parseUnits(n.toString(), 'ether');
@@ -78,6 +79,50 @@ describe('Exchange', function () {
         describe('Failure', function () {
             it('fails when no tokens are approved', async function () {
                 await expect(exchange.connect(user1).depositToken(token1.address, amount)).to.be.reverted;
+            })
+        })
+    })
+
+    describe('Withdraw Tokens', function () {
+
+        let transaction, result;
+        let amount = tokens(100);
+
+        this.beforeEach(async function () {
+            // approve tokens
+            transaction = await token1.connect(user1).approve(exchange.address, amount);
+            result = await transaction.wait();
+            // deposit tokens
+            transaction = await exchange.connect(user1).depositToken(token1.address, amount);
+            result = await transaction.wait();
+        })
+
+        describe('Success', async function () {
+
+            this.beforeEach(async function () {
+                transaction = await exchange.connect(user1).withdrawToken(token1.address, amount);
+                result = await transaction.wait();
+            })
+
+            it('withdraws token funds from exchange', async function () {
+                expect(await token1.balanceOf(exchange.address)).to.equal(0);
+            })
+            it('updates user balance on exchange', async function () {
+                expect(await exchange.tokens(user1.address, token1.address)).to.equal(0);
+            })
+            it('emits a withdraw event', async function () {
+                expect(result.events[1].event).to.equal('Withdraw');
+                expect(result.events[1].args.token).to.equal(token1.address);
+                expect(result.events[1].args.user).to.equal(user1.address);
+                expect(result.events[1].args.amount).to.equal(amount);
+                expect(result.events[1].args.balance).to.equal(0);
+            })
+        })
+
+        describe('Failure', async function () {
+
+            it('rejects insufficient funds', async function () {
+                await (expect(exchange.connect(user1).withdrawToken(token1.address, tokens(10000)))).to.be.reverted;
             })
         })
     })

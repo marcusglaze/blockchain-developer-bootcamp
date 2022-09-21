@@ -37,4 +37,11 @@ contract Exchange {
         // Emit an event
         emit Deposit(_token, msg.sender, _amount, tokens[msg.sender][_token]);
     }
+
+    function withdrawToken(address _token, uint256 _amount) public {
+        require(tokens[msg.sender][_token] >= _amount);
+        Token(_token).transfer(msg.sender, _amount);
+        tokens[msg.sender][_token] = tokens[msg.sender][_token] - _amount;
+        emit Withdraw(_token, msg.sender, _amount, tokens[msg.sender][_token]);
+    }
 }
