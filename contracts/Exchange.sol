@@ -7,9 +7,9 @@ import "./Token.sol";
 contract Exchange {
 
     // Exchange contract needs to be able to:
-    //      [] deposit
-    //      [] withdraw
-    //      [] check balances
+    //      [x] deposit
+    //      [x] withdraw
+    //      [x] check balances
     //      [] make orders
     //      [] cancel orders
     //      [] fill orders
@@ -18,11 +18,24 @@ contract Exchange {
 
     address public feeAccount;
     uint256 public feePercent;
+    uint256 public ordersCount;
+
+    struct _Order {
+        uint256 id;
+        address user;
+        address tokenGet;
+        uint256 amountGet;
+        address tokenGive;
+        uint256 amountGive;
+        uint256 timestamp;   
+    }
 
     mapping(address => mapping (address => uint256)) public tokens;
+    mapping(uint256 => _Order) public orders;
 
     event Deposit(address token, address user, uint256 amount, uint256 balance);
     event Withdraw(address token, address user, uint256 amount, uint256 balance);
+    event Order(_Order order);
 
     constructor(address _feeAccount, uint256 _feePercent) {
         feeAccount = _feeAccount;
@@ -43,5 +56,24 @@ contract Exchange {
         Token(_token).transfer(msg.sender, _amount);
         tokens[msg.sender][_token] = tokens[msg.sender][_token] - _amount;
         emit Withdraw(_token, msg.sender, _amount, tokens[msg.sender][_token]);
+    }
+
+    function makeOrder(address _tokenGet, uint256 _amountGet, address _tokenGive, uint256 _amountGive) public {
+        require(tokens[msg.sender][_tokenGive] >= _amountGive);
+        ordersCount++;
+        _Order memory order = _Order(
+            ordersCount, 
+            msg.sender, 
+            _tokenGet, 
+            _amountGet, 
+            _tokenGive, 
+            _amountGive, 
+            block.timestamp);
+        orders[ordersCount] = order;
+        emit Order(order);
+    }
+
+    function cancelOrder() public {
+
     }
 }

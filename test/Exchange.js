@@ -8,7 +8,7 @@ const tokens = function (n) {
 
 describe('Exchange', function () {
 
-    let exchange, feeAccount, deployer, user1, user2, token1;
+    let exchange, feeAccount, deployer, user1, user2, token1, token2;
 
     const feePercent = 10;
 
@@ -27,6 +27,11 @@ describe('Exchange', function () {
             'Dapp University',
             'DAPP',
             1000000
+        );
+        token2 = await Token.deploy(
+            'Mock Wrapped Ether',
+            'mEth',
+            10000000
         );
 
         // transfer tokens to the user
@@ -123,6 +128,55 @@ describe('Exchange', function () {
 
             it('rejects insufficient funds', async function () {
                 await (expect(exchange.connect(user1).withdrawToken(token1.address, tokens(10000)))).to.be.reverted;
+            })
+        })
+    })
+
+    describe('Make Orders', function () {
+
+        let transaction, result;
+        let amount = tokens(100);
+
+        describe('Success', function () {
+
+            this.beforeEach(async function () {
+                // approve tokens
+                transaction = await token1.connect(user1).approve(exchange.address, amount);
+                result = await transaction.wait();
+                // deposit tokens
+                transaction = await exchange.connect(user1).depositToken(token1.address, amount);
+                result = await transaction.wait();
+                // make order
+                transaction = await exchange.connect(user1).makeOrder(token2.address, tokens(100), token1.address, tokens(10));
+                result = await transaction.wait();
+            })
+
+            it('increments orders count', async function () {
+                expect(await exchange.ordersCount()).to.equal(1);
+            })
+            it('tracks new order', async function () {
+                const order = await exchange.orders(1);
+                expect(order.id).to.equal(1);
+                expect(order.user).to.equal(user1.address);
+                expect(order.tokenGet).to.equal(token2.address);
+                expect(order.amountGet).to.equal(tokens(100));
+                expect(order.tokenGive).to.equal(token1.address);
+                expect(order.amountGive).to.equal(tokens(10));
+            })
+            it('emits an Order event', async function () {
+                expect(result.events[0].event).to.equal('Order');
+                expect(result.events[0].args.order.id).to.equal(1);
+                expect(result.events[0].args.order.user).to.equal(user1.address);
+                expect(result.events[0].args.order.tokenGet).to.equal(token2.address);
+                expect(result.events[0].args.order.amountGet).to.equal(tokens(100));
+                expect(result.events[0].args.order.tokenGive).to.equal(token1.address);
+                expect(result.events[0].args.order.amountGive).to.equal(tokens(10));
+            })
+        })
+        
+        describe('Failure', function () {
+            it('rejects making order with insufficient funds', async function () {
+                await (expect(exchange.connect(user1).makeOrder(token2.address, tokens(100), token1.address, tokens(10)))).to.be.reverted;
             })
         })
     })
