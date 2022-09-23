@@ -6,16 +6,6 @@ import "./Token.sol";
 
 contract Exchange {
 
-    // Exchange contract needs to be able to:
-    //      [x] deposit
-    //      [x] withdraw
-    //      [x] check balances
-    //      [x] make orders
-    //      [x] cancel orders
-    //      [] fill orders
-    //      [] charge fees
-    //      [x] track fee account
-
     address public feeAccount;
     uint256 public feePercent;
     uint256 public ordersCount;
@@ -33,11 +23,13 @@ contract Exchange {
     mapping(address => mapping (address => uint256)) public tokens;
     mapping(uint256 => _Order) public orders;
     mapping(uint256 => bool) public orderCancelled;
+    mapping(uint256 => bool) public orderFilled;
 
     event Deposit(address token, address user, uint256 amount, uint256 balance);
     event Withdraw(address token, address user, uint256 amount, uint256 balance);
     event Order(_Order order);
     event Cancel(_Order order);
+    event Trade(address creator, _Order order);
 
     constructor(address _feeAccount, uint256 _feePercent) {
         feeAccount = _feeAccount;
@@ -45,11 +37,8 @@ contract Exchange {
     }
 
     function depositToken(address _token, uint256 _amount) public {
-        // Transfer tokens to exchange
         require(Token(_token).transferFrom(msg.sender, address(this), _amount));
-        // Update user balance
         tokens[msg.sender][_token] = tokens[msg.sender][_token] + _amount;
-        // Emit an event
         emit Deposit(_token, msg.sender, _amount, tokens[msg.sender][_token]);
     }
 
@@ -74,5 +63,29 @@ contract Exchange {
         require(order.user == msg.sender);
         orderCancelled[order.id] = true;
         emit Cancel(order);
+    }
+
+    function fillOrder(uint256 _id) public {
+        require(orders[_id].id == _id);
+        require(orderFilled[_id] != true);
+        require(orderCancelled[_id] != true);
+        
+        _Order memory order = orders[_id];
+        _trade(order.user, order.tokenGet, order.amountGet, order.tokenGive, order.amountGive);
+        orderFilled[_id] = true;
+
+        emit Trade(msg.sender, order);
+    }
+
+    function _trade(address _user, address _tokenGet, uint256 _amountGet, address _tokenGive, uint256 _amountGive) internal {
+        uint256 _feeAmount = _amountGet * feePercent / 100;
+        require(tokens[msg.sender][_tokenGet] >= (_amountGet + _feeAmount));
+
+        tokens[_user][_tokenGet] = tokens[_user][_tokenGet] + _amountGet;
+        tokens[msg.sender][_tokenGet] = tokens[msg.sender][_tokenGet] - (_amountGet + _feeAmount);
+        tokens[feeAccount][_tokenGet] = tokens[feeAccount][_tokenGet] + _feeAmount;
+
+        tokens[_user][_tokenGive] = tokens[_user][_tokenGive] - _amountGive;
+        tokens[msg.sender][_tokenGive] = tokens[msg.sender][_tokenGive] + _amountGive;
     }
 }

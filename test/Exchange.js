@@ -8,7 +8,7 @@ const tokens = function (n) {
 
 describe('Exchange', function () {
 
-    let exchange, feeAccount, deployer, user1, user2, token1, token2;
+    let exchange, feeAccount, deployer, user1, user2, token1, token2, transaction;
 
     const feePercent = 10;
 
@@ -34,8 +34,12 @@ describe('Exchange', function () {
             10000000
         );
 
-        // transfer tokens to the user
-        let transaction = await token1.connect(deployer).transfer(user1.address, tokens(1000));
+        // transfer token1 tokens to user1
+        transaction = await token1.connect(deployer).transfer(user1.address, tokens(1000));
+        await transaction.wait();
+
+        // transfer token2 tokens to user2
+        transaction = await token2.connect(deployer).transfer(user2.address, tokens(1000));
         await transaction.wait();
     })
 
@@ -195,7 +199,7 @@ describe('Exchange', function () {
             transaction = await exchange.connect(user1).depositToken(token1.address, amount);
             result = await transaction.wait();
             // make order
-            transaction = await exchange.connect(user1).makeOrder(token2.address, tokens(100), token1.address, tokens(10));
+            transaction = await exchange.connect(user1).makeOrder(token2.address, tokens(1), token1.address, tokens(1));
             result = await transaction.wait();
         })
 
@@ -219,9 +223,9 @@ describe('Exchange', function () {
                     expect(result.events[0].args.order.id).to.equal(1);
                     expect(result.events[0].args.order.user).to.equal(user1.address);
                     expect(result.events[0].args.order.tokenGet).to.equal(token2.address);
-                    expect(result.events[0].args.order.amountGet).to.equal(tokens(100));
+                    expect(result.events[0].args.order.amountGet).to.equal(tokens(1));
                     expect(result.events[0].args.order.tokenGive).to.equal(token1.address);
-                    expect(result.events[0].args.order.amountGive).to.equal(tokens(10));
+                    expect(result.events[0].args.order.amountGive).to.equal(tokens(1));
                     expect(result.events[0].args.order.timestamp).to.at.least(1);
                 })
             })
@@ -232,6 +236,86 @@ describe('Exchange', function () {
                 })
                 it('rejects cancelling other users orders', async function () {
                     await (expect(exchange.connect(user2).cancelOrder(1))).to.be.reverted;
+                })
+            })
+        })
+
+        describe('Filling Orders', function () {
+
+            let transaction, result;
+            let amount = tokens(100);
+
+            describe('Success', function () {
+
+                this.beforeEach(async function () {
+                    // approve user2 tokens
+                    transaction = await token2.connect(user2).approve(exchange.address, amount);
+                    result = await transaction.wait();
+                    // deposit user2 tokens
+                    transaction = await exchange.connect(user2).depositToken(token2.address, amount);
+                    result = await transaction.wait();
+                    // fill order
+                    transaction = await exchange.connect(user2).fillOrder(1);
+                    result = await transaction.wait();
+                })
+                
+                it('executes the trade and charges fees', async function () {
+                    expect(await exchange.tokens(user1.address, token1.address)).to.equal(tokens(99));
+                    expect(await exchange.tokens(user1.address, token2.address)).to.equal(tokens(1));
+
+                    expect(await exchange.tokens(user2.address, token1.address)).to.equal(tokens(1));
+                    expect(await exchange.tokens(user2.address, token2.address)).to.equal(tokens(99 - (1 * feePercent /100)));
+
+                    expect(await exchange.tokens(feeAccount.address, token2.address)).to.equal(tokens(1 * feePercent / 100));
+                })
+                it('emits a Trade event', async function () {
+                    expect(result.events[0].event).to.equal('Trade');
+                    expect(result.events[0].args.creator).to.equal(user2.address);
+                    expect(result.events[0].args.order.id).to.equal(1);
+                    expect(result.events[0].args.order.user).to.equal(user1.address);
+                    expect(result.events[0].args.order.tokenGet).to.equal(token2.address);
+                    expect(result.events[0].args.order.amountGet).to.equal(tokens(1));
+                    expect(result.events[0].args.order.tokenGive).to.equal(token1.address);
+                    expect(result.events[0].args.order.amountGive).to.equal(tokens(1));
+                    expect(result.events[0].args.order.timestamp).to.at.least(1);
+                })
+                it('updates filled orders', async function () {
+                    expect(await exchange.orderFilled(1)).to.equal(true);
+                })
+            })
+
+            describe('Failure', function () {
+                it('rejects insufficient funds', async function () {
+                    await (expect(exchange.connect(user2).fillOrder(1))).to.be.reverted;
+                })
+                it('rejects invalid order id', async function () {
+                    await (expect(exchange.connect(user2).fillOrder(2))).to.be.reverted;
+                })
+                it('rejects filling a filled order', async function () {
+                    // approve user2 tokens
+                    transaction = await token2.connect(user2).approve(exchange.address, amount);
+                    result = await transaction.wait();
+                    // deposit user2 tokens
+                    transaction = await exchange.connect(user2).depositToken(token2.address, amount);
+                    result = await transaction.wait();
+                    // fill order
+                    transaction = await exchange.connect(user2).fillOrder(1);
+                    result = await transaction.wait();
+
+                    await (expect(exchange.connect(user2).fillOrder(1))).to.be.reverted;
+                })
+                it('rejects filling a cancelled order', async function () {
+                    // approve user2 tokens
+                    transaction = await token2.connect(user2).approve(exchange.address, amount);
+                    result = await transaction.wait();
+                    // deposit user2 tokens
+                    transaction = await exchange.connect(user2).depositToken(token2.address, amount);
+                    result = await transaction.wait();
+                    // cancel order
+                    transaction = await exchange.connect(user1).cancelOrder(1);
+                    result = await transaction.wait();
+
+                    await (expect(exchange.connect(user2).fillOrder(1))).to.be.reverted;
                 })
             })
         })
