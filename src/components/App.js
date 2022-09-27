@@ -1,27 +1,28 @@
 import { useEffect } from 'react';
-import { ethers } from 'ethers';
+import { useDispatch } from 'react-redux';
+
 import '../App.css';
+import { 
+  loadProvider, 
+  loadNetwork,
+  loadAccount,
+  loadToken } from '../store/interactions';
 
 const config = require('../config.json');
 
-const TOKEN_ABI = require('../abis/Token.json').abi;
-const EXCHANGE_ABI = require('../abis/Exchange.json').abi;
-
 function App() {
+
+  const dispatch = useDispatch();
 
   const loadBlockchainData = async () => {
     // gets metamask connection
-    const accounts = await window.ethereum.request({method: 'eth_requestAccounts'});
-    console.log(accounts[0]);
+    await loadAccount(dispatch);
 
     // connect ethers to blockchain
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const { chainId } = await provider.getNetwork();
-    console.log(chainId)
+    const provider = loadProvider(dispatch);
+    const { chainId } = await loadNetwork(provider, dispatch);
 
-    const token = new ethers.Contract(config[chainId].dApp.address, TOKEN_ABI, provider);
-    console.log(token.address);
-    console.log(await token.symbol());
+    await loadToken(provider, config[chainId].dApp.address, dispatch);
   }
 
   useEffect(() => {
