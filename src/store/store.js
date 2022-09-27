@@ -5,11 +5,13 @@ import { composeWithDevTools } from 'redux-devtools-extension';
 /* Import Reducers */
 import { 
     provider, 
-    tokens } from './reducers';
+    tokens,
+    exchange } from './reducers';
 
 const reducer = combineReducers({
     provider,
-    tokens
+    tokens,
+    exchange
 });
 
 const initialState = {};
