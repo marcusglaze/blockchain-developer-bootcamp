@@ -23,22 +23,20 @@ const Balance = () => {
     const transferInProgress = useSelector(state =>state.exchange.transferInProgress);
 
     const amountHandler = (e, token) => {
-        if (token.address == tokens[0].address) {
+        if (token.address === tokens[0].address) {
             setToken1TransferAmount(e.target.value);
-        }
-        else if (token.address == tokens[1].address) {
+        } else {
             setToken2TransferAmount(e.target.value);
         }
     }
 
-    const transferHandler = (e, token, isDeposit) => {
+    const transferHandler = (e, token) => {
         e.preventDefault();
         const transferState = isDeposit ? 'Deposit' : 'Withdraw';
-        if (token.address == tokens[0].address) {
+        if (token.address === tokens[0].address) {
             transferTokens(provider, exchange, transferState, token, token1TransferAmount, dispatch);
             setToken1TransferAmount(0);
-        }
-        else if (token.address == tokens[1].address) {
+        } else {
             transferTokens(provider, exchange, transferState, token, token2TransferAmount, dispatch);
             setToken2TransferAmount(0);
         }
@@ -62,7 +60,7 @@ const Balance = () => {
         if (exchange && tokens[0] && tokens[1] && account) {
             loadBalances(exchange, tokens, account, dispatch);
         }  
-    }, [exchange, tokens, account, transferInProgress])
+    }, [exchange, tokens, account, transferInProgress, dispatch])
 
     return(
         <div className='component exchange__transfers'>
