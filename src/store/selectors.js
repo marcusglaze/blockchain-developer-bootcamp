@@ -160,3 +160,55 @@ const buildGraphData = (orders) => {
 
     return graphData;
 }
+
+const decorateFilledOrders = (orders, tokens) => {
+    let previousOrder = orders[0];
+    return (
+        orders = orders.map((order) =>{
+            order = decorateOrder(order.order, tokens);
+            order = decorateFilledOrder(order, previousOrder);
+            previousOrder = order;
+            return order;
+        })
+    )
+}
+
+const decorateFilledOrder = (order, previousOrder) => {
+    return ({
+        ...order,
+        tokenPriceClass: tokenPriceClass(order.tokenPrice, order.id, previousOrder)
+    })
+}
+
+const tokenPriceClass = (tokenPrice, orderId, previousOrder) => {
+    if (previousOrder.id === orderId) {
+        return GREEN;
+    }
+    
+    if (previousOrder.tokenPrice <= tokenPrice) {
+        return GREEN;
+    } else {
+        return RED;
+    }
+}
+
+export const filledOrdersSelector = createSelector(
+    filledOrders,
+    tokens,
+    (orders, tokens) => {
+    if (!tokens[0] || !tokens[1]) { return };
+
+    // filter orders by selected tokens
+    orders = orders.filter((o) => o.order.tokenGet === tokens[0].address || o.order.tokenGet === tokens[1].address);
+    orders = orders.filter((o) => o.order.tokenGive === tokens[0].address || o.order.tokenGive === tokens[1].address);
+
+    /// sort orders by ascending timestamp for price comparison
+    orders = orders.sort((a,b) => a.timestamp - b.timestamp);
+
+    orders = decorateFilledOrders(orders, tokens);
+
+    /// sort orders by descending timestamp for UI display
+    orders = orders.sort((a,b) => b.timestamp - a.timestamp);
+
+    return orders;
+})

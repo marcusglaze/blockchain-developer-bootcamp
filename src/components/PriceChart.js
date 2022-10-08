@@ -3,7 +3,7 @@ import Chart from 'react-apexcharts';
 
 import Banner from "./Banner";
 
-import { options } from './PriceChart.config';
+import { options, series } from './PriceChart.config';
 import { priceChartSelector } from "../store/selectors";
 
 import arrowUp from '../assets/up-arrow.svg';
@@ -40,7 +40,7 @@ const PriceChart = () => {
                 <Chart 
                     type='candlestick'
                     options={options}
-                    series={priceChart.series}
+                    series={priceChart ? priceChart.series: series}
                     width='100%'
                     height='100%'
                 />
