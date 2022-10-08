@@ -1,5 +1,5 @@
 import { createSelector } from "reselect";
-import { get, groupBy, reject } from "lodash";
+import { get, groupBy, maxBy, minBy, reject } from "lodash";
 import { ethers } from "ethers";
 import moment from "moment/moment";
 
@@ -101,3 +101,62 @@ export const orderBookSelector = createSelector(
 
     return orders;
 })
+
+export const priceChartSelector = createSelector(
+    filledOrders,
+    tokens,
+    (orders, tokens) => {
+    if (!tokens[0] || !tokens[1]) { return };
+
+    // filter orders by selected tokens
+    orders = orders.filter((o) => o.order.tokenGet === tokens[0].address || o.order.tokenGet === tokens[1].address);
+    orders = orders.filter((o) => o.order.tokenGive === tokens[0].address || o.order.tokenGive === tokens[1].address);
+
+    // sort orders by timestamp
+    orders = orders.sort((a,b) => a.timestamp - b.timestamp);
+
+    // Decorate orders - add display attributes
+    orders = orders.map((o) => decorateOrder(o.order, tokens));
+
+    let secondLastOrder, lastOrder;
+    [secondLastOrder, lastOrder] = orders.slice(orders.length - 2, orders.length);
+
+    const lastPrice = get(lastOrder, 'tokenPrice', 0);
+    const secondLastPrice = get(secondLastOrder, 'tokenPrice', 0);
+    
+    return({
+        series: [{
+            data: buildGraphData(orders)
+        }],
+        lastPrice,
+        lastPriceChange: (lastPrice >= secondLastPrice ? '+' : '-')
+    })
+    
+})
+
+const buildGraphData = (orders) => {
+    // group by time resolution
+    orders = groupBy(orders, (o) => moment.unix(o.timestamp).startOf('hour').format());
+
+    // get each hour where data exists
+    const hours = Object.keys(orders);
+    
+    // build the graph series
+    const graphData = hours.map((hour) => {
+        // fetch all orders from current hour
+        const group = orders[hour];
+        
+        // calculate price values: open, high, low, close
+        const open = group[0]
+        const high = maxBy(group, 'tokenPrice');
+        const low = minBy(group, 'tokenPrice');
+        const close = group[group.length - 1];
+
+        return ({
+            x: new Date(hour),
+            y: [open.tokenPrice, high.tokenPrice, low.tokenPrice, close.tokenPrice]
+        })
+    })
+
+    return graphData;
+}
