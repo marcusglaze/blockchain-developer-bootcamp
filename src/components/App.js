@@ -9,12 +9,14 @@ import {
   loadAccount,
   loadTokens,
   loadExchange,
+  loadOrders,
   subscribeToEvents } from '../store/interactions';
 
 import Navbar from './Navbar';
 import Markets from './Markets';
 import Balance from './Balance';
 import Order from './Order';
+import OrderBook from './OrderBook';
 
 function App() {
 
@@ -47,6 +49,7 @@ function App() {
     //const exchangeConfig = config[chainId].exchange;
     const exchange = await loadExchange(provider, config[chainId].exchange.address, dispatch);
 
+    loadOrders(provider, exchange, dispatch);
     subscribeToEvents(exchange, dispatch);
   }
 
@@ -67,7 +70,7 @@ function App() {
           <Balance/>
 
           <Order/>
-          
+
         </section>
         <section className='exchange__section--right grid'>
 
@@ -77,7 +80,7 @@ function App() {
 
           {/* Trades */}
 
-          {/* OrderBook */}
+          <OrderBook/>
 
         </section>
       </main>
