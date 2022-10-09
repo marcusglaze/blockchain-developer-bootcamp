@@ -79,27 +79,31 @@ const Transactions = () => {
                 <button onClick={tabHandler} ref={tradesRef} className='tab'>Trades</button>
               </div>
             </div>
-    
-            <table>
-              <thead>
-                <tr>
-                  <th>Time<img src={sort} alt='Sort'/></th>
-                  <th>{symbols && symbols[0]}<img src={sort} alt='Sort'/></th>
-                  <th>{symbols && `${symbols[0]}/${symbols[1]}`}<img src={sort} alt='Sort'/></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filledOrders && filledOrders.map((order, index) => {
-                  return (
-                    <tr key={index}>
-                      <td>{order.formattedTimestamp}</td>
-                      <td style={{color: order.orderTypeClass}}>{order.orderSign}{order.token0Amount}</td>
-                      <td>{order.tokenPrice}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+
+            {!filledOrders || filledOrders.length === 0 ? (
+              <Banner text='No Transactions'/>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Time<img src={sort} alt='Sort'/></th>
+                    <th>{symbols && symbols[0]}<img src={sort} alt='Sort'/></th>
+                    <th>{symbols && `${symbols[0]}/${symbols[1]}`}<img src={sort} alt='Sort'/></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filledOrders && filledOrders.map((order, index) => {
+                    return (
+                      <tr key={index}>
+                        <td>{order.formattedTimestamp}</td>
+                        <td style={{color: order.orderTypeClass}}>{order.orderSign}{order.token0Amount}</td>
+                        <td>{order.tokenPrice}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
         </div>

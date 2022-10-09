@@ -164,11 +164,16 @@ const buildGraphData = (orders) => {
 
 const decorateFilledOrders = (orders, tokens) => {
     let previousOrder = orders[0];
+    let count = 0;
     return (
         orders = orders.map((order) =>{
+            if (count === 0) {
+                previousOrder = order.order;
+            }
             order = decorateOrder(order.order, tokens);
             order = decorateFilledOrder(order, previousOrder);
             previousOrder = order;
+            count++;
             return order;
         })
     )
