@@ -47,7 +47,7 @@ const decorateOrder = (order, tokens) => {
         token0Amount: ethers.utils.formatUnits(token0Amount, 'ether'),
         token1Amount: ethers.utils.formatUnits(token1Amount, 'ether'),
         tokenPrice,
-        formattedTimestamp: moment.unix(order.timestamp).format('h:mm:ssa d MM D')
+        formattedTimestamp: moment.unix(order.timestamp).format('h:mm:ssa d MMM D')
     })
 }
 
@@ -250,6 +250,54 @@ export const myOpenOrdersSelector = createSelector(
         orders = decorateMyOpenOrders(orders, tokens);
 
         orders = orders.sort((a,b) => a.timestamp - b.timestamp);
+
+        return orders;
+    }
+)
+
+const decorateMyFilledOrders = (orders, account, tokens) => {
+    return (
+        orders.map((order) => {
+            order = decorateOrder(order.order, tokens);
+            order = decorateMyFilledOrder(order, account, tokens);
+            return(order);
+        })
+    )
+}
+
+const decorateMyFilledOrder = (order, account, tokens) => {
+    const myOrder = order.user !== account;
+    let orderType;
+    if (myOrder) {
+        orderType = order.tokenGive === tokens[1].address ? 'buy' : 'sell';
+    } else {
+        orderType = order.tokenGive === tokens[1].address ? 'sell' : 'buy';
+    }
+    return({
+        ...order,
+        orderType,
+        orderTypeClass: (orderType === 'buy' ? GREEN : RED),
+        orderSign: (orderType === 'buy' ? '+' : '-')
+    })
+}
+
+export const myFilledOrdersSelector = createSelector(
+    account,
+    tokens,
+    filledOrders,
+    (account, tokens, orders) => {
+        if (!tokens[0] || !tokens[1]) { return };
+
+        // filter orders by current account
+        orders = orders.filter((o) => o.order.user === account || o.creator === account);
+
+        // filter orders by selected tokens
+        orders = orders.filter((o) => o.order.tokenGet === tokens[0].address || o.order.tokenGet === tokens[1].address);
+        orders = orders.filter((o) => o.order.tokenGive === tokens[0].address || o.order.tokenGive === tokens[1].address);
+
+        orders = decorateMyFilledOrders(orders, account, tokens);
+
+        orders = orders.sort((a,b) => b.timestamp - a.timestamp);
 
         return orders;
     }
