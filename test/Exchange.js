@@ -169,13 +169,21 @@ describe('Exchange', function () {
             })
             it('emits an Order event', async function () {
                 expect(result.events[0].event).to.equal('Order');
-                expect(result.events[0].args.order.id).to.equal(1);
-                expect(result.events[0].args.order.user).to.equal(user1.address);
-                expect(result.events[0].args.order.tokenGet).to.equal(token2.address);
-                expect(result.events[0].args.order.amountGet).to.equal(tokens(100));
-                expect(result.events[0].args.order.tokenGive).to.equal(token1.address);
-                expect(result.events[0].args.order.amountGive).to.equal(tokens(10));
-                expect(result.events[0].args.order.timestamp).to.at.least(1);
+                //expect(result.events[0].args.order.id).to.equal(1);
+                //expect(result.events[0].args.order.user).to.equal(user1.address);
+                //expect(result.events[0].args.order.tokenGet).to.equal(token2.address);
+                //expect(result.events[0].args.order.amountGet).to.equal(tokens(100));
+                //expect(result.events[0].args.order.tokenGive).to.equal(token1.address);
+                //expect(result.events[0].args.order.amountGive).to.equal(tokens(10));
+                //expect(result.events[0].args.order.timestamp).to.at.least(1);
+                expect(result.events[0].args.id).to.equal(1);
+                expect(result.events[0].args.user).to.equal(user1.address);
+                expect(result.events[0].args.tokenGet).to.equal(token2.address);
+                expect(result.events[0].args.amountGet).to.equal(tokens(100));
+                expect(result.events[0].args.tokenGive).to.equal(token1.address);
+                expect(result.events[0].args.amountGive).to.equal(tokens(10));
+                expect(result.events[0].args.timestamp).to.at.least(1);
+
             })
         })
         
@@ -220,13 +228,21 @@ describe('Exchange', function () {
                 })
                 it('emits a Cancel event', async function () {
                     expect(result.events[0].event).to.equal('Cancel');
-                    expect(result.events[0].args.order.id).to.equal(1);
-                    expect(result.events[0].args.order.user).to.equal(user1.address);
-                    expect(result.events[0].args.order.tokenGet).to.equal(token2.address);
-                    expect(result.events[0].args.order.amountGet).to.equal(tokens(1));
-                    expect(result.events[0].args.order.tokenGive).to.equal(token1.address);
-                    expect(result.events[0].args.order.amountGive).to.equal(tokens(1));
-                    expect(result.events[0].args.order.timestamp).to.at.least(1);
+                    //expect(result.events[0].args.order.id).to.equal(1);
+                    //expect(result.events[0].args.order.user).to.equal(user1.address);
+                    //expect(result.events[0].args.order.tokenGet).to.equal(token2.address);
+                    //expect(result.events[0].args.order.amountGet).to.equal(tokens(1));
+                    //expect(result.events[0].args.order.tokenGive).to.equal(token1.address);
+                    //expect(result.events[0].args.order.amountGive).to.equal(tokens(1));
+                    //expect(result.events[0].args.order.timestamp).to.at.least(1);
+                    expect(result.events[0].args.id).to.equal(1);
+                    expect(result.events[0].args.user).to.equal(user1.address);
+                    expect(result.events[0].args.tokenGet).to.equal(token2.address);
+                    expect(result.events[0].args.amountGet).to.equal(tokens(1));
+                    expect(result.events[0].args.tokenGive).to.equal(token1.address);
+                    expect(result.events[0].args.amountGive).to.equal(tokens(1));
+                    expect(result.events[0].args.timestamp).to.at.least(1);
+
                 })
             })
 
@@ -271,13 +287,21 @@ describe('Exchange', function () {
                 it('emits a Trade event', async function () {
                     expect(result.events[0].event).to.equal('Trade');
                     expect(result.events[0].args.creator).to.equal(user2.address);
-                    expect(result.events[0].args.order.id).to.equal(1);
-                    expect(result.events[0].args.order.user).to.equal(user1.address);
-                    expect(result.events[0].args.order.tokenGet).to.equal(token2.address);
-                    expect(result.events[0].args.order.amountGet).to.equal(tokens(1));
-                    expect(result.events[0].args.order.tokenGive).to.equal(token1.address);
-                    expect(result.events[0].args.order.amountGive).to.equal(tokens(1));
-                    expect(result.events[0].args.order.timestamp).to.at.least(1);
+                    //expect(result.events[0].args.order.id).to.equal(1);
+                    //expect(result.events[0].args.order.user).to.equal(user1.address);
+                    //expect(result.events[0].args.order.tokenGet).to.equal(token2.address);
+                    //expect(result.events[0].args.order.amountGet).to.equal(tokens(1));
+                    //expect(result.events[0].args.order.tokenGive).to.equal(token1.address);
+                    //expect(result.events[0].args.order.amountGive).to.equal(tokens(1));
+                    //expect(result.events[0].args.order.timestamp).to.at.least(1);
+                    expect(result.events[0].args.id).to.equal(1);
+                    expect(result.events[0].args.user).to.equal(user1.address);
+                    expect(result.events[0].args.tokenGet).to.equal(token2.address);
+                    expect(result.events[0].args.amountGet).to.equal(tokens(1));
+                    expect(result.events[0].args.tokenGive).to.equal(token1.address);
+                    expect(result.events[0].args.amountGive).to.equal(tokens(1));
+                    expect(result.events[0].args.timestamp).to.at.least(1);
+
                 })
                 it('updates filled orders', async function () {
                     expect(await exchange.orderFilled(1)).to.equal(true);

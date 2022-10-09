@@ -27,9 +27,36 @@ contract Exchange {
 
     event Deposit(address token, address user, uint256 amount, uint256 balance);
     event Withdraw(address token, address user, uint256 amount, uint256 balance);
-    event Order(_Order order);
-    event Cancel(_Order order);
-    event Trade(address creator, _Order order);
+    //event Order(_Order order);
+    //event Cancel(_Order order);
+    //event Trade(address creator, _Order order);
+    event Order(
+        uint256 id,
+        address user,
+        address tokenGet,
+        uint256 amountGet,
+        address tokenGive,
+        uint256 amountGive,
+        uint256 timestamp);
+    
+    event Cancel(
+        uint256 id,
+        address user,
+        address tokenGet,
+        uint256 amountGet,
+        address tokenGive,
+        uint256 amountGive,
+        uint256 timestamp);
+
+    event Trade(
+        address creator,
+        uint256 id,
+        address user,
+        address tokenGet,
+        uint256 amountGet,
+        address tokenGive,
+        uint256 amountGive,
+        uint256 timestamp);
 
     constructor(address _feeAccount, uint256 _feePercent) {
         feeAccount = _feeAccount;
@@ -54,7 +81,8 @@ contract Exchange {
         ordersCount++;
         _Order memory order = _Order(ordersCount, msg.sender, _tokenGet, _amountGet, _tokenGive, _amountGive, block.timestamp);
         orders[ordersCount] = order;
-        emit Order(order);
+        //emit Order(order);
+        emit Order(ordersCount, msg.sender, _tokenGet, _amountGet, _tokenGive, _amountGive, block.timestamp);
     }
 
     function cancelOrder(uint256 _id) public {
@@ -62,7 +90,8 @@ contract Exchange {
         require(order.id == _id);
         require(order.user == msg.sender);
         orderCancelled[order.id] = true;
-        emit Cancel(order);
+        //emit Cancel(order);
+        emit Cancel(order.id, order.user, order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.timestamp);
     }
 
     function fillOrder(uint256 _id) public {
@@ -74,7 +103,8 @@ contract Exchange {
         _trade(order.user, order.tokenGet, order.amountGet, order.tokenGive, order.amountGive);
         orderFilled[_id] = true;
 
-        emit Trade(msg.sender, order);
+        //emit Trade(msg.sender, order);
+        emit Trade(msg.sender, order.id, order.user, order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.timestamp);
     }
 
     function _trade(address _user, address _tokenGet, uint256 _amountGet, address _tokenGive, uint256 _amountGive) internal {
