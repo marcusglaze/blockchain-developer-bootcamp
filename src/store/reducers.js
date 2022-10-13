@@ -75,6 +75,10 @@ const DEFAULT_EXCHANGE_STATE = {
         loaded: false,
         data: []
     },
+    filledOrders: {
+        loaded: false,
+        data: []
+    },
     events: []
 }
 export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
@@ -206,6 +210,13 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
                 }
             }
         case 'CANCEL_ORDER_SUCCESS':
+            // prevent duplicate orders
+            index = state.cancelledOrders.data.findIndex((order) => order.id.toString() === action.order.id.toString());
+            if (index === -1) {
+                data = [...state.cancelledOrders.data, action.order];
+            } else {
+                data = state.cancelledOrders;
+            }
             return {
                 ...state,
                 transaction: {
@@ -216,10 +227,7 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
                 },
                 cancelledOrders: {
                     ...state.cancelledOrders,
-                    data: [
-                        ...state.cancelledOrders.data,
-                        action.order
-                    ]
+                    data
                 },
                 events: [action.event, ...state.events]
             }
@@ -228,6 +236,48 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
                 ...state,
                 transaction: {
                     transactionType: 'Cancel Order',
+                    isPending: false,
+                    isSuccessful: false,
+                    isError: true
+                }
+            }
+        case 'FILL_ORDER_REQUEST':
+            return {
+                ...state,
+                transaction: {
+                    transactionType: 'Fill Order',
+                    isPending: true,
+                    isSuccessful: false,
+                    isError: false
+                }
+            }
+        case 'FILL_ORDER_SUCCESS':
+            // prevent duplicate orders
+            index = state.filledOrders.data.findIndex(order => order.id.toString() === action.order.id.toString());
+            if (index === -1) {
+                data = [...state.filledOrders.data, action.order];
+            } else {
+                data = state.filledOrders.data;
+            }
+            return {
+                ...state,
+                transaction: {
+                    transactionType: 'Fill Order',
+                    isPending: false,
+                    isSuccessful: true,
+                    isError: false
+                },
+                filledOrders: {
+                    ...state.filledOrders,
+                    data
+                },
+                events: [action.event, ...state.events]
+            }
+        case 'FILL_ORDER_FAIL':
+            return {
+                ...state,
+                transaction: {
+                    transactionType: 'Fill Order',
                     isPending: false,
                     isSuccessful: false,
                     isError: true

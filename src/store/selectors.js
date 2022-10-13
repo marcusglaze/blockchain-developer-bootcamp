@@ -8,6 +8,8 @@ const RED = '#F45353'
 
 const account = state => get(state, 'provider.account');
 const tokens = state => get(state, 'tokens.contracts');
+const events = state => get(state, 'exchange.events');
+
 const allOrders = state => get(state, 'exchange.allOrders.data', []);
 const cancelledOrders = state => get(state, 'exchange.cancelledOrders.data', []);
 const filledOrders = state => get(state, 'exchange.filledOrders.data', []);
@@ -300,5 +302,15 @@ export const myFilledOrdersSelector = createSelector(
         orders = orders.sort((a,b) => b.timestamp - a.timestamp);
 
         return orders;
+    }
+)
+
+export const myEventsSelector = createSelector(
+    account,
+    events,
+    (account, events) => {
+        // filter events by current account
+        events = events.filter((e) => e.args[1] === account);  
+        return events;
     }
 )
