@@ -8,7 +8,7 @@ async function main() {
 
     // Fetch Accounts
     const accounts = await ethers.getSigners();
-    console.log(`Accounts fetched:\n${accounts[0].address}\n${accounts[1].address}\n${accounts[2].address}\n`);
+    console.log(`Accounts fetched:\n${accounts[0].address}\n${accounts[1].address}\n`);
 
     // Deploy contract
     const dApp = await Token.deploy('Dapp University', 'DAPP', 1000000);

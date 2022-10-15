@@ -18,7 +18,22 @@
         }
     },
 
-    "42": {
-        "explorerURL": "https://kovan.etherscan.io/"
+    "5": {
+        "explorerURL": "https://goerli.etherscan.io/",
+        "exchange": {
+            "address": "0x194e9Ee9049f8dEC5674D48c36CCD73E16474595"
+        },
+
+        "dApp": {
+            "address": "0x7174a22Eac4719A7Ea8113c55bEB1A2C04FfD536"
+        },
+
+        "mEth": {
+            "address": "0x66034395611763593de8c33a439f6334f6d539DF"
+        },
+
+        "mDai": {
+            "address": "0x19391D04C7226E85c4F7C02a7f4B0C7a7bEC60B1"
+        }
     }
 }
